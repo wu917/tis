@@ -76,6 +76,20 @@ TIS 是新一代 **AI 原生数据集成平台**：底层为经过生产验证�
 - **tis-openclaw-plugin**：完全独立版本（无 parent，1.0.0），把 TIS 能力封装成 OpenClaw 插件（MCP 协议 + SKILL.md），默认 endpoint `http://localhost:8080/tjs/mcp`。
 - ~~tis-collection-info-collect~~：chatbi-only 分支已删除。
 
+## 依赖分层准则（强依赖 vs 外部扩容）
+
+**强依赖（已内置内核，初始项目零外部服务即可启动）**：
+- 元数据库：Derby 内嵌（`tis.datasource.type=derby`，jar 已在 tis-plugin 依赖树），MySQL 仅是扩容选项
+- ChatBI 契约面（本仓库代码）：`plugin.ontology`(模型+SPI)、`plugin.ontology.chatbi`(接口)、LLM SPI、MCP 工具骨架、Web/MCP 双入口
+- 插件加载基础设施：PluginManager + KeyedPluginStore
+
+**外部扩容项（按需装 tpi / 接服务，缺失不阻塞启动）**：
+- `tis-ontology-plugin`（开源，[qlangtech/plugins](https://github.com/qlangtech/plugins) 仓 277 文件实测确认）：提供 DefaultChatBIService/GraphRAGService/Neo4jSync/SQL校验链——未装时启动正常，调 ChatBI 快速失败并给指引
+- LLM Provider tpi、JDBC 数据源 tpi：问数链路运行时才依赖
+- Neo4j、Doris 数仓：图谱统计与 SQL 执行的后端，连接失败错误原样上抛（Neo4j 未配属合法降级态）
+
+> 打包/装配指引见 [docs/plugin-guide-chatbi.md](./docs/plugin-guide-chatbi.md)。新增"扩容项"必须遵守 AGENTS.md「禁止错误静默兜底」：缺失时要么显式降级（empty+Javadoc）要么快速失败，绝不假成功。
+
 ## AI 能力体系（v5.1 核心）
 
 三层分布：
@@ -190,6 +204,6 @@ mvn clean deploy -Dmaven.test.skip=true -Dautoconfig.skip \
 
 ## 外部配套仓库
 
-前端 ng-tis · 插件 [plugins](https://github.com/qlangtech/plugins)（大部分 Reader/Writer 实现不在本仓库！本仓库是 Core 内核，管插件生命周期）· 商业插件 tis-plugins-commercial · 数据源专项 tis-sqlserver/tis-paimon/tis-dameng-plugin · 插件脚手架 tis-archetype-plugin · 元数据生成 update-center2 · fork 版 DataX/Flink/Chunjun/Debezium/Flink-CDC/Dolphinscheduler
+前端 ng-tis · 插件 [plugins](https://github.com/qlangtech/plugins)（大部分 Reader/Writer 及 **tis-ontology-plugin 全部 ChatBI 实现**都在此仓，2026-08 实测 277 文件含 DefaultChatBIService/GraphRAG/Neo4jSync；本仓库是 Core 内核，管插件生命周期）· ~~商业插件 tis-plugins-commercial~~（已 404 下架，勿再引用）· 数据源专项 tis-sqlserver/tis-paimon/tis-dameng-plugin · 插件脚手架 tis-archetype-plugin · 元数据生成 update-center2 · fork 版 DataX/Flink/Chunjun/Debezium/Flink-CDC/Dolphinscheduler
 
 > ⚠️ 常见误区：新增数据源插件通常应在新仓库基于 tis-archetype-plugin 开发并通过 maven-tpi-plugin 打 tpi 包发布到 update-center，而非直接改本仓库。
