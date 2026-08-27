@@ -71,28 +71,21 @@
 
 
     <modules>
-        <module>xmodifier</module>
+        <!-- feature/chatbi-only 裁剪：仅保留 本体建模+GraphRAG+NL2SQL 所需模块 -->
         <module>docker-compose</module>
         <module>datax-config</module>
         <module>tis-builder-api</module>
         <module>tis-manage-pojo</module>
-        <module>tis-hadoop-rpc</module>
-        <module>tis-solrconfig-parser</module>
         <module>tis-common</module>
         <module>tis-base-test</module>
         <module>tis-web-start-api</module>
         <module>tis-web-start</module>
-        <module>tis-assemble</module>
         <module>tis-plugin-sezpoz</module>
         <module>tis-plugin</module>
-        <module>tis-dag</module>
-        <module>tis-sql-parser</module>
         <module>tis-common-dao</module>
         <module>tis-console</module>
-        <module>tis-scala-compiler</module>
         <module>maven-tpi-plugin</module>
-        <module>tis-k8s</module>
-<!--        <module>tis-mcp</module>-->
+
     </modules>
 
     <dependencies>
@@ -715,7 +708,25 @@
             <id>maven-central-direct</id>
             <url>https://repo1.maven.org/maven2</url>
         </repository>
+        <!-- 自研构件仓库：tis-ibatis 等不在中央仓库（Maven 3.8+ 屏蔽 http，用 https） -->
+        <repository>
+            <id>rdc-releases</id>
+            <url>https://mvn-repo.oss-cn-hangzhou.aliyuncs.com/release/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
     </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>rdc-releases</id>
+            <url>https://mvn-repo.oss-cn-hangzhou.aliyuncs.com/release/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </pluginRepository>
+    </pluginRepositories>
 
     <build>
 

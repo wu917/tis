@@ -46,7 +46,6 @@ import com.qlangtech.tis.runtime.module.misc.IControlMsgHandler;
 import com.qlangtech.tis.solrdao.ISchemaField;
 import com.qlangtech.tis.solrdao.ISchemaPluginContext;
 import com.qlangtech.tis.solrdao.SchemaResult;
-import com.qlangtech.tis.solrdao.pojo.PSchemaField;
 import com.qlangtech.tis.sql.parser.SqlTaskNodeMeta;
 import com.qlangtech.tis.sql.parser.er.ERRules;
 import com.qlangtech.tis.sql.parser.meta.DependencyNode;
@@ -689,52 +688,7 @@ public class CollectionAction extends com.qlangtech.tis.runtime.module.action.Ad
     confirmModel.setAppform(extendApp);
 
     SchemaResult schemaResult = SchemaAction.mergeWfColsWithTplCollection(this
-      , context, null, ISchemaPluginContext.NULL, (cols, schemaParseResult) -> {
-        ColumnMetaData pkMeta = targetColMetas.getPKMeta();
-        PSchemaField field = null;
-        ColMetaTuple rft = null;
-        TargetCol tcol = null;
-        final Map<String, ColMetaTuple> targetCols = targetColMetas.getTargetCols();
-        for (ISchemaField f : schemaParseResult.getSchemaFields()) {
-          field = (PSchemaField) f;
-
-          rft = targetCols.get(f.getName());
-          if (rft == null) {
-            throw new IllegalStateException("field:" + f.getName() + " relevant reflect 'SchemaFieldType' can not be null");
-          }
-
-          boolean isPk = false;
-          if (StringUtils.equals(pkMeta.getKey(), field.getName())) {
-            // 设置主键
-            isPk = true;
-            field.setIndexed(true);
-            field.setType(schemaParseResult.getTisType(ReflectSchemaFieldType.STRING.literia));
-          } else {
-            field.setType(schemaParseResult.getTisType(rft.getSchemaFieldType()));
-          }
-          tcol = targetColMetas.targetColMap.get(field.getName());
-          if (tcol != null) {
-            if (tcol.isIndexable()) {
-              field.setIndexed(true);
-            }
-
-            if (rft.colMeta.getSchemaFieldType().tokenizer) {
-              if (StringUtils.isNotEmpty(tcol.getToken())) {
-                field.setTokenizerType(tcol.getToken());
-              } else {
-                // 主键不需要分词
-                if (!isPk && rft.isTypeOf(ReflectSchemaFieldType.STRING)) {
-                  // String类型默认使用like分词
-                  field.setTokenizerType(ReflectSchemaFieldType.LIKE.literia);
-                }
-              }
-            }
-          }
-        }
-
-        schemaParseResult.setUniqueKey(pkMeta.getKey());
-        schemaParseResult.setSharedKey(pkMeta.getKey());
-      });
+      , context, null, ISchemaPluginContext.NULL);
 
     // 创建索引实例
     return this.createCollection(context, confirmModel, schemaResult

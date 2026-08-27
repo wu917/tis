@@ -25,7 +25,6 @@ import com.qlangtech.tis.offline.module.action.TestOfflineDatasourceAction;
 import com.qlangtech.tis.plugin.TestPluginAndCfgsSnapshotOnWorkflow;
 import com.qlangtech.tis.runtime.module.action.TestSchemaAction;
 import com.qlangtech.tis.runtime.module.action.TestSysInitializeAction;
-import com.qlangtech.tis.solrdao.TestSchemaResult;
 import com.qlangtech.tis.util.TestPluginItems;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -41,7 +40,6 @@ public class TestAll extends TestCase {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(TestPluginItems.class);
     suite.addTestSuite(TestSysInitializeAction.class);
-    suite.addTestSuite(TestSchemaResult.class);
     suite.addTestSuite(TestSchemaAction.class);
     suite.addTestSuite(TestPluginAction.class);
     suite.addTestSuite(TestOfflineDatasourceAction.class);

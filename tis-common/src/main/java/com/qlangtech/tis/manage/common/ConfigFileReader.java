@@ -17,14 +17,10 @@
  */
 package com.qlangtech.tis.manage.common;
 
-import com.qlangtech.tis.exec.IIndexMetaData;
 import com.qlangtech.tis.manage.biz.dal.pojo.Snapshot;
 import com.qlangtech.tis.manage.biz.dal.pojo.UploadResource;
 import com.qlangtech.tis.pubhook.common.ConfigConstant;
-import com.qlangtech.tis.solrdao.IFieldTypeFactory;
 import com.qlangtech.tis.solrdao.ISchemaPluginContext;
-import com.qlangtech.tis.solrdao.SolrFieldsParser;
-import com.qlangtech.tis.solrdao.impl.ParseResult;
 import com.qlangtech.tis.utils.MD5Utils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -194,33 +190,9 @@ public class ConfigFileReader {
 
         @Override
         public ConfigFileValidateResult validate(ISchemaPluginContext schemaPlugin, UploadResource resource) {
-            // Assert.assertNotNull("resource can not be null", );
+            // feature/chatbi-only 裁剪：schema 解析器(SolrFieldsParser)已随 tis-solrconfig-parser 移除
             Objects.requireNonNull(resource, "resource can not be null");
-            // 校验schema 文件是否合法
-            IFieldTypeFactory ftFactory = null;
-            final byte[] content = resource.getContent();
-            final ConfigFileValidateResult result = new ConfigFileValidateResult();
-            try {
-                IIndexMetaData meta = SolrFieldsParser.parse(() -> content, schemaPlugin, true);
-                ParseResult parseResult = meta.getSchemaParseResult();
-
-                for (SolrFieldsParser.SolrType ftype : parseResult.getFieldTypes()) {
-                    if (ftype.plugin && (ftFactory = schemaPlugin.findFieldTypeFactory(ftype.getPluginName())) == null) {
-                        parseResult.errlist.add("fieldType:" + ftype.getSType().getName() + " relevant fieldType plugin has not find plugin in plugin define collection");
-                    }
-                }
-
-                if (!parseResult.isValid()) {
-                    result.setValid(false);
-                    for (Object error : parseResult.errlist) {
-                        result.appendResult(error.toString());
-                    }
-                }
-            } catch (Exception e) {
-                result.setValid(false);
-                result.appendResult(getErrorContent(e));
-            }
-            return result;
+            return new ConfigFileValidateResult();
         }
 
         @Override

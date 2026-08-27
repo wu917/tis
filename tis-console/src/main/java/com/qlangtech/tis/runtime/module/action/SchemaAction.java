@@ -57,7 +57,6 @@ import com.qlangtech.tis.plugin.IPluginStore;
 import com.qlangtech.tis.plugin.ds.ColumnMetaData;
 import com.qlangtech.tis.plugin.ds.ISelectedTab;
 import com.qlangtech.tis.plugin.ds.ReflectSchemaFieldType;
-import com.qlangtech.tis.plugin.solr.schema.FieldTypeFactory;
 import com.qlangtech.tis.pubhook.common.RunEnvironment;
 import com.qlangtech.tis.runtime.module.action.jarcontent.SaveFileContentAction;
 import com.qlangtech.tis.runtime.module.misc.FieldErrorInfo;
@@ -72,10 +71,6 @@ import com.qlangtech.tis.solrdao.ISchemaField;
 import com.qlangtech.tis.solrdao.ISchemaPluginContext;
 import com.qlangtech.tis.solrdao.SchemaMetaContent;
 import com.qlangtech.tis.solrdao.SchemaResult;
-import com.qlangtech.tis.solrdao.SolrFieldsParser;
-import com.qlangtech.tis.solrdao.SolrFieldsParser.SolrType;
-import com.qlangtech.tis.solrdao.impl.ParseResult;
-import com.qlangtech.tis.solrdao.pojo.PSchemaField;
 import com.qlangtech.tis.trigger.util.JsonUtil;
 import com.qlangtech.tis.utils.MD5Utils;
 import com.qlangtech.tis.workflow.pojo.WorkFlow;
@@ -198,12 +193,11 @@ public class SchemaAction extends BasicModule {
     this.setBizResult(context, tplSchema.toJSON());
   }
 
-  // 单元测试用
-  public static SolrFieldsParser.ParseResultCallback parseResultCallback4test = (cols, result) -> {
-  };
-
   /**
    * 通过解析workflow的最终导出的字段，来生成Schema配置
+   * <p>
+   * feature/chatbi-only: 原实现基于 SolrFieldsParser/XModifier 合并 workflow 字段到模板 schema，
+   * 解析器与 XML 改写器已随 tis-solrconfig-parser/xmodifier 裁剪，此处退化为直接返回模板 schema 原样内容。
    *
    * @param module
    * @param context
@@ -213,42 +207,13 @@ public class SchemaAction extends BasicModule {
    */
   public static SchemaResult mergeWfColsWithTplCollection(BasicModule module, Context context,
                                                           ISolrAppSource appSource,
-                                                          final ISchemaPluginContext schemaPlugin,
-                                                          SolrFieldsParser.ParseResultCallback... parseResultCallback) throws Exception {
+                                                          final ISchemaPluginContext schemaPlugin) throws Exception {
     // 通过version取默认模板
     Application tplApp = getTemplateApp(module);
     SchemaResult tplSchema = getTemplateSchema(module, context, tplApp);
     if (!tplSchema.isSuccess()) {
       return null;
     }
-    ParseResult parseResult = (ParseResult) tplSchema.getParseResult();
-    SolrType strType = parseResult.getTisType(ReflectSchemaFieldType.STRING.literia);
-    List<ColumnMetaData> cols = appSource.reflectCols();
-    for (ColumnMetaData colName : cols) {
-      PSchemaField f = new PSchemaField();
-      f.setName(colName.getKey());
-      f.setType(strType);
-      f.setStored(true);
-      f.setIndexed(false);
-      f.setMltiValued(false);
-      f.setDocValue(false);
-      parseResult.dFields.add(f);
-    }
-
-    parseResult.setUniqueKey(null);
-    for (SolrFieldsParser.ParseResultCallback c : parseResultCallback) {
-      c.process(cols, parseResult);
-    }
-
-    parseResult.addReservedFields();
-    tplSchema.content = XModifier.modifySchemaContent(tplSchema.content, (document2, modifier) -> {
-      modifier.addModify("/fields/field(:delete)");
-      modifier.addModify("/sharedKey(:delete)");
-      modifier.deleteUniqueKey();
-      updateSchemaXML(parseResult.types, schemaPlugin, parseResult, document2, modifier);
-    });
-
-    parseResultCallback4test.process(cols, parseResult);
     return tplSchema;
   }
 
@@ -614,76 +579,23 @@ public class SchemaAction extends BasicModule {
 
   /**
    * 记载和Collection相关的plugin
+   * <p>
+   * feature/chatbi-only: FieldTypeFactory 插件体系已随 tis-plugin/plugin.solr.schema 裁剪，
+   * 返回空实现占位。
    *
    * @param collection
    * @return
    */
   public static ISchemaPluginContext createSchemaPlugin(DataXName collection) {
-    IPluginStore<FieldTypeFactory> fieldTypePluginStore = TIS.getPluginStore(collection, FieldTypeFactory.class);
-    Objects.requireNonNull(fieldTypePluginStore, "fieldTypePluginStore can not be null");
-    final List<FieldTypeFactory> plugins = fieldTypePluginStore.getPlugins();
-
-    final Set<String> loadedFieldTypePlugins =
-            plugins.stream().filter(p -> p.forStringTokenizer()).map((p) -> p.identityValue()).collect(Collectors.toSet());
-
-    return new ISchemaPluginContext() {
-      @Override
-      public List<FieldTypeFactory> getFieldTypeFactories() {
-        return plugins;
-      }
-
-      @Override
-      public FieldTypeFactory findFieldTypeFactory(String name) {
-        return fieldTypePluginStore.find(name, false);
-      }
-
-      @Override
-      public boolean isTokenizer(String typeName) {
-        return loadedFieldTypePlugins.contains(typeName);
-      }
-    };
-
+    return ISchemaPluginContext.NULL;
   }
 
   public static SchemaResult parseSchemaResultWithPluginCfg(DataXName collection, IMessageHandler msgHandler,
                                                             Context context, byte[] resContent) throws Exception {
-    final Map<String, Boolean> pluginTypeAddedMap = Maps.newHashMap();
     ISchemaPluginContext schemaPlugin = createSchemaPlugin(collection);
 
-
-    SchemaResult schemaResult = SchemaResult.parseSchemaResult(msgHandler, context, resContent, false, schemaPlugin,
-            (cols, sResult) -> {
-      boolean pluginTypeAdded;
-      String identityNameVal = null;
-      List<FieldTypeFactory> fieldTypeFactories = schemaPlugin.getFieldTypeFactories();
-      for (FieldTypeFactory plugin : fieldTypeFactories) {
-        identityNameVal = plugin.identityValue();
-        if (!(pluginTypeAdded = sResult.containType(identityNameVal))) {
-          sResult.addFieldType(identityNameVal, SolrFieldsParser.parseFieldType(identityNameVal, identityNameVal,
-                  plugin.forStringTokenizer()));
-        }
-        pluginTypeAddedMap.put(identityNameVal, pluginTypeAdded);
-      }
-    });
-
-    schemaResult.content = XModifier.modifySchemaContent(schemaResult.content, (document2, modifier) -> {
-      // FieldTypeFactory fieldTypeFactory = null;
-      for (Map.Entry<String, Boolean> entry : pluginTypeAddedMap.entrySet()) {
-        if (!entry.getValue()) {
-          //          fieldTypeFactory = fieldTypePluginStore.find(entry.getKey());
-          //          Objects.requireNonNull(fieldTypeFactory, "the name:" + entry.getKey() + " relevant
-          //          fieldTypeFactory can not be null");
-          // fieldTypeFactory.
-          modifier.addModify(String.format("/types/fieldType[@name='%s']/@class", entry.getKey()),
-                  "plugin:" + entry.getKey());
-          //precisionStep="0" positionIncrementGap="0"
-          //modifier.addModify(String.format("/types/fieldType[@name='%s']/@precisionStep", entry.getKey()), "0");
-          modifier.addModify(String.format("/types/fieldType[@name='%s']/@positionIncrementGap", entry.getKey()), "0");
-        }
-      }
-
-    });
-    return schemaResult;
+    // feature/chatbi-only: 原 FieldType 插件注入与 XModifier 改写逻辑已随相关模块裁剪
+    return SchemaResult.parseSchemaResult(msgHandler, context, resContent, false, schemaPlugin);
   }
 
   interface ISchemaJsonVisitor {
@@ -745,123 +657,17 @@ public class SchemaAction extends BasicModule {
 
   /**
    * Schema XML模式 --> 专家模式 是一个数据结构投影，确保XML转专家模式，再专家模式转xml模式信息不会减少
+   * <p>
+   * feature/chatbi-only: 原实现基于 SolrFieldsParser/XModifier 做字段投影与改写，
+   * 解析器与 XML 改写器已随 tis-solrconfig-parser/xmodifier 裁剪，此处退化为原样返回提交内容。
    */
   protected String createSchema(ISchemaPluginContext schemaPlugin, UploadSchemaWithRawContentForm schemaForm,
                                 boolean shallExecuteDelete) throws Exception {
     Assert.assertNotNull(schemaForm);
-    // 先解析库中已经存在的模板
     if (StringUtils.isBlank(schemaForm.getSchemaXmlContent())) {
       throw new IllegalArgumentException("schemaXmlContent can not be null");
     }
-    // 原始内容
-    final byte[] originContent = schemaForm.getSchemaXmlContent().getBytes(getEncode());
-    org.w3c.dom.Document document = createDocument(originContent);
-
-    ParseResult parseResult = SolrFieldsParser.parseDocument(document, schemaPlugin, false);
-    byte[] modifiedContent = XModifier.modifySchemaContent(originContent, (document2, modifier) -> {
-      for (PSchemaField field : parseResult.dFields) {
-        // 小白编辑模式下可能将字段删除，所以在高级模式下也要将字段删除
-        if (schemaForm.containsField(field.getName())) {
-          //  intersectionKeys.add(field.getName());
-          continue;
-        }
-        if (shallExecuteDelete) {
-          if (field.isDynamic()) {
-            modifier.addModify("/fields/dynamicField[@name='" + field.getName() + "'](:delete)");
-          } else {
-            modifier.addModify("/fields/field[@name='" + field.getName() + "'](:delete)");
-          }
-        }
-      }
-      updateSchemaXML(parseResult.types, schemaPlugin, schemaForm, document2, modifier);
-      DocType docType = new DocType("schema", "solrres://tisrepository/dtd/solrschema.dtd");
-      document2.setDocType(docType);
-    });
-
-    return new String(modifiedContent, TisUTF8.get());
-  }
-
-  /**
-   * @param fieldTypes 已经存在的字段类型
-   * @param schemaForm
-   * @param document2
-   * @param modifier
-   */
-  private static void updateSchemaXML(Map<String, SolrType> fieldTypes, ISchemaPluginContext schemaPlugin,
-                                      ISchema schemaForm, Document document2, final XModifier modifier) {
-    SolrType type = null;
-    String fieldTypeRef = null;
-    FieldTypeFactory fieldTypeFactory = null;
-
-    String pluginName = null;
-    for (ISchemaField field : schemaForm.getSchemaFields()) {
-
-      modifySchemaProperty(modifier, field, "type", (fieldTypeRef = parseSolrFieldType(field)));
-      modifySchemaProperty(modifier, field, "stored", field.isStored());
-      modifySchemaProperty(modifier, field, "indexed", field.isIndexed());
-      modifySchemaProperty(modifier, field, "docValues", field.isDocValue());
-      modifySchemaProperty(modifier, field, "multiValued", field.isMultiValue());
-      type = fieldTypes.get(fieldTypeRef);
-      Objects.requireNonNull(type, "fieldName:" + field.getName() + " relevant fieldType can not be null");
-      if (type.plugin) {
-        pluginName = type.getPluginName();
-        fieldTypeFactory = schemaPlugin.findFieldTypeFactory(pluginName);
-        Objects.requireNonNull(fieldTypeFactory, "pluginName:" + pluginName + " relevant fieldTypeFactory can not be "
-                + "null");
-        fieldTypeFactory.process(document2, modifier);
-      }
-
-    }
-    if (StringUtils.isNotBlank(schemaForm.getUniqueKey())) {
-      modifySchemaProperty("/uniqueKey/text()", schemaForm.getUniqueKey(), modifier);
-    } else {
-      modifier.deleteUniqueKey();
-    }
-    if (StringUtils.isNotBlank(schemaForm.getSharedKey())) {
-      modifySchemaProperty("/sharedKey/text()", schemaForm.getSharedKey(), modifier);
-    } else {
-      modifier.deleteSharedKey();
-    }
-  }
-
-  /**
-   * 通过提交的field信息
-   *
-   * @param field
-   * @return
-   */
-  protected static String parseSolrFieldType(ISchemaField field) {
-    if (ReflectSchemaFieldType.STRING.literia.equalsIgnoreCase(field.getTisFieldTypeName()) && StringUtils.isNotBlank(field.getTokenizerType())) {
-      return field.getTokenizerType();
-    }
-    VisualType type = null;
-    for (Map.Entry<String, VisualType> entry : TokenizerType.visualTypeMap.entrySet()) {
-      type = entry.getValue();
-      if (!ReflectSchemaFieldType.STRING.literia.equalsIgnoreCase(field.getTisFieldTypeName()) && StringUtils.equals(field.getTisFieldTypeName(), entry.getValue().type)) {
-        return type.getType();
-      }
-    }
-    return field.getTisFieldTypeName();
-  }
-
-  private static void modifySchemaProperty(String key, Object value, XModifier modifier) {
-    modifier.addModify(key, String.valueOf(value));
-  }
-
-  /**
-   * @param modifier
-   * @param field
-   */
-  private static void modifySchemaProperty(XModifier modifier, ISchemaField field, String key, Object value) {
-    if (value == null) {
-      return;
-    }
-    if (field.isDynamic()) {
-      modifySchemaProperty(String.format("/fields/dynamicField[@name='%s']/@%s", field.getName(), key), value,
-              modifier);
-    } else {
-      modifySchemaProperty(String.format("/fields/field[@name='%s']/@%s", field.getName(), key), value, modifier);
-    }
+    return new String(schemaForm.getSchemaXmlContent().getBytes(getEncode()), TisUTF8.get());
   }
 
   private UploadSchemaWithRawContentForm getFormValues() throws Exception {
