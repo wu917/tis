@@ -1,0 +1,24 @@
+{
+  "targetTables": {
+    "label": "导出表",
+    "viewtype": "idlist",
+    "enum": "com.qlangtech.tis.plugin.ontology.ExportToOntologyInDataSource.getCandidateTargetTables():uncache_true",
+    "help": "选择需要导出作为本体对象的表"
+  },
+  "ontologyPkg": {
+    "label": "本体(Ontology)域",
+    "help": "选择目标本体管理域",
+    "creator": {
+      "assistType": "hyperlink",
+      "routerLink": "/base/ontology",
+      "plugin": [
+        {
+          "hetero": "ontology-domain",
+          "descName": "Ontology",
+          "append": false
+        }
+      ],
+      "label": "配置"
+    }
+  }
+}

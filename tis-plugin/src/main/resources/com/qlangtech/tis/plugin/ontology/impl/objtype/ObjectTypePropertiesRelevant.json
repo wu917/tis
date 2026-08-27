@@ -1,0 +1,1 @@
+{  "pkSetter": {    "label": "主键设置",    "dftVal": "on"  },  "titleKey": {    "label": "标题键",    "enum": "com.qlangtech.tis.plugin.ontology.impl.objtype.ObjectTypePropertiesRelevant.availableProps():uncache_true",    "help": "标题键（Title Key）用于展示本体对象实例的可读名称。选择后，该属性将作为对象的显示标题，在列表和详情页面中作为主要展示字段使用。"  }}

@@ -84,9 +84,10 @@ TIS 是新一代 **AI 原生数据集成平台**：底层为经过生产验证�
 - 插件加载基础设施：PluginManager + KeyedPluginStore
 
 **外部扩容项（按需装 tpi / 接服务，缺失不阻塞启动）**：
-- `tis-ontology-plugin`（开源，[qlangtech/plugins](https://github.com/qlangtech/plugins) 仓 277 文件实测确认）：提供 DefaultChatBIService/GraphRAGService/Neo4jSync/SQL校验链——未装时启动正常，调 ChatBI 快速失败并给指引
+- ~~Neo4j~~：**已改为内核内嵌强依赖**——`sync/Neo4jStoreManager` 用 `DatabaseManagementServiceBuilder` 在 `<data.dir>/neo4j-data` 懒加载启动嵌入式图库（首次在 Domain 上启用 ChatBI 时触发），无需独立部署 Neo4j 服务器
 - LLM Provider tpi、JDBC 数据源 tpi：问数链路运行时才依赖
-- Neo4j、Doris 数仓：图谱统计与 SQL 执行的后端，连接失败错误原样上抛（Neo4j 未配属合法降级态）
+- Doris 数仓：问数执行的后端，连接失败错误原样上抛
+- 已知限制：语义检索嵌入模型 `models/model.onnx`(191MB, paraphrase-multilingual-MiniLM-L12-v2) 已内置 classpath；配套 vocab.txt 在上游仓库即为指向作者本地路径的断链软链，缺失时 OntologyEmbeddingService 走 char-level 分词 + 模型仍在路径下可正常推理，但 WordPiece 精确分词待补（跟进项：导出 XLM-R sentencepiece 词表为 BERT vocab.txt 格式）。模型不可用时降级为随机向量并 log.warn，管道不中断
 
 > 打包/装配指引见 [docs/plugin-guide-chatbi.md](./docs/plugin-guide-chatbi.md)。新增"扩容项"必须遵守 AGENTS.md「禁止错误静默兜底」：缺失时要么显式降级（empty+Javadoc）要么快速失败，绝不假成功。
 

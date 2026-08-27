@@ -22,3 +22,6 @@
 
 # 本地运行时目录（init-local-dev.sh 生成）
 runtime/
+
+# 知识图谱嵌入模型大文件(经 init-local-dev.sh --with-model 下载到 data/models 或手动放置)
+*.onnx

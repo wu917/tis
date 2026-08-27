@@ -1,0 +1,91 @@
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.qlangtech.tis.plugin.ontology.impl.valuetype.constraints;
+
+import com.alibaba.citrus.turbine.Context;
+import com.qlangtech.tis.datax.TimeFormat;
+import com.qlangtech.tis.extension.TISExtension;
+import com.qlangtech.tis.plugin.IEndTypeGetter;
+import com.qlangtech.tis.plugin.annotation.FormField;
+import com.qlangtech.tis.plugin.annotation.FormFieldType;
+import com.qlangtech.tis.plugin.annotation.Validator;
+import com.qlangtech.tis.plugin.datax.transformer.UDFDesc;
+import com.qlangtech.tis.plugin.ontology.impl.valuetype.ValueConstraint;
+import com.qlangtech.tis.runtime.module.misc.IControlMsgHandler;
+
+import java.util.List;
+import java.util.Set;
+
+/**
+ *
+ * @author 百岁 (baisui@qlangtech.com)
+ * @date 2026/4/19
+ */
+public class Range4TimeStamp extends ValueConstraint {
+
+    private static final String FIELD_MIN = "min";
+    private static final String FIELD_MAX = "max";
+
+    @FormField(ordinal = 0, type = FormFieldType.DateTime, validate = {Validator.require})
+    public java.util.Date min;
+
+    @FormField(ordinal = 1, type = FormFieldType.DateTime, validate = {Validator.require})
+    public java.util.Date max;
+
+    @Override
+    public List<UDFDesc> getLiteria() {
+        return List.of(
+                new UDFDesc("From", TimeFormat.yyyyMMdd_HH_mm_ss.format(this.min))
+                , new UDFDesc("To", TimeFormat.yyyyMMdd_HH_mm_ss.format(this.max)));
+    }
+
+    @TISExtension
+    public static class DefaultDesc extends BaseDesc {
+        public DefaultDesc() {
+            super();
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "Range";
+        }
+
+        @Override
+        public Set<IEndTypeGetter.EndType> specializedTypeEnds() {
+            return Set.of(IEndTypeGetter.EndType.DataTypeTime);
+        }
+
+        @Override
+        protected boolean validateAll(IControlMsgHandler msgHandler, Context context, PostFormVals postFormVals) {
+            Range4TimeStamp range = postFormVals.newInstance();
+            if (range.min.after(range.max)) {
+                msgHandler.addFieldError(context, FIELD_MIN, "起始时间必须小于等于结束时间");
+                msgHandler.addFieldError(context, FIELD_MAX, "结束时间必须大于等于起始时间");
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public String shortComment() {
+            return "约束时间戳属性值必须在指定时间范围内";
+        }
+    }
+
+}

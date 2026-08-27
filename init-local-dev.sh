@@ -83,7 +83,10 @@ CP_FILE=/tmp/tis-cp.txt
   "/Applications/IntelliJ IDEA CE.app/Contents/plugins/maven/lib/maven3/bin/mvn" -q \
     dependency:build-classpath -Dmdep.outputFile=${CP_FILE} \
     -Dmdep.includeScope=runtime $OFFLINE > /dev/null )
-TRASH_EXCLUDE='log4j|jetty|logback|slf4j|servlet'
+# context lib 不放任何 jetty/http2/websocket 容器组件(Jetty12 由 tis-web-start 容器侧 classpath 提供,
+# 混入低版本 jetty 会因 org.eclipse.jetty.io.WriteFlusher$Listener 撞类);
+# servlet-api 由容器提供; legacy log4j 绑定不引入(log4j-api+log4j-to-slf4j 桥接保留)
+TRASH_EXCLUDE='^jetty-|^http2-|^fcgi-|^websocket-|^jakarta\.servlet|^javax\.servlet|^servlet|^log4j-slf4j|^slf4j-log4j|^slf4j-jdk|^slf4j-simple'
 copied=0; skipped=0
 CP_CLASSPATH="$(cat "${CP_FILE}")"
 for e in ${CP_CLASSPATH//:/ }; do
@@ -109,8 +112,27 @@ rsync -a --delete "${REPO_DIR}/tis-console/webapp/" "${CTX}/webapp/" \
 # -----------------------------------------------------------------------------
 mkdir -p "${CTX}/webapp/WEB-INF/classes/tis-web-config" "${RUNTIME_DIR}/tis-web-config"
 
-if $WITH_MYSQL; then
-  read -rp "MySQL host: " MYSQL_HOST
+# -----------------------------------------------------------------------------
+# 3.5 知识图谱语义嵌入模型（191MB，不入 git；--with-model 下载到 data.dir）
+# -----------------------------------------------------------------------------
+MODEL_DIR="${RUNTIME_DIR}/data/models"
+MODEL_FILE="${MODEL_DIR}/model.onnx"
+if [[ "${1:-}" == "--with-model" || "${2:-}" == "--with-model" ]]; then
+  mkdir -p "${MODEL_DIR}"
+  if [[ ! -s "${MODEL_FILE}" ]]; then
+    log "下载嵌入模型 paraphrase-multilingual-MiniLM-L12-v2 (191MB)..."
+    export https_proxy="${https_proxy:-http://127.0.0.1:7890}"
+    curl -sL --max-time 900 \
+      "https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2/resolve/main/onnx/model.onnx" \
+      -o "${MODEL_FILE}.tmp" && mv "${MODEL_FILE}.tmp" "${MODEL_FILE}"
+  fi
+  # 词表缺失时 char-level 分词降级，管道不中断（见 OntologyEmbeddingService）
+  ls -lh "${MODEL_FILE}" | awk '{print "[init] 模型就位:", $5, $9}'
+else
+  warn "跳过嵌入模型下载(--with-model 可启用)；缺失时 GraphRAG 语义检索走随机向量降级"
+fi
+
+if $WITH_MYSQL; then  read -rp "MySQL host: " MYSQL_HOST
   read -rp "MySQL port [3306]: " MYSQL_PORT; MYSQL_PORT=${MYSQL_PORT:-3306}
   read -rp "MySQL user [root]: " MYSQL_USER; MYSQL_USER=${MYSQL_USER:-root}
   read -rsp "MySQL password: " MYSQL_PASS; echo
