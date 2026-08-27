@@ -1054,19 +1054,8 @@ public class DataxAction extends BasicModule {
     File dataXDirTrash = null;
     File scriptRootDir = null;
     try {
-      // 判断增量实例是否存在
-      IFlinkIncrJobStatus.State state = null;
-      try {
-        // feature/chatbi-only: CoreAction.getIndexIncrStatus 已随 CoreAction 移除，增量实例状态探测退化为 NONE
-        state = IFlinkIncrJobStatus.State.NONE;
-      } catch (Throwable e) {
-        logger.error(e.getMessage(), e);
-        state = IFlinkIncrJobStatus.State.NONE;
-      }
-      if (state != IFlinkIncrJobStatus.State.NONE) {
-        this.addErrorMessage(context, "增量实例存在，请先将其删除");
-        return;
-      }
+      // feature/chatbi-only: 增量实例存在性探测已随 CoreAction/Flink 链路裁剪。
+      // 本版本不存在增量实例，无需拦截，直接执行管道删除；不做恒定返回 NONE 的假探测。
       //增量配置脚本移位置
       scriptRootDir = streamScriptRootDir(appDomain.getAppName());
       scriptDootDirTrash = streamScriptRootDirTrash(appDomain.getAppName());

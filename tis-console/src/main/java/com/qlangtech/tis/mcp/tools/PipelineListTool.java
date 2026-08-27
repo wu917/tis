@@ -49,6 +49,8 @@ import java.util.Optional;
  */
 public class PipelineListTool extends McpTool {
 
+  private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(PipelineListTool.class);
+
   public static final String KEY_READER_TYPE = "readerType";
   public static final String KEY_WRITER_TYPE = "writerType";
   private static final String KEY_SUPPORT_BATCH_SYNCHRONIZE = "supportBatchSynchronize";
@@ -109,7 +111,9 @@ public class PipelineListTool extends McpTool {
           pipelines.add(pipeJson);
         }
         //}
-      } catch (Exception ignored) {
+      } catch (Exception e) {
+        // 部分管道加载失败可跳过继续枚举，但必须记录，否则结果集会静默缺失
+        logger.warn("pipeline:{} load reader/writer descriptor fail, skip it from list", pipelineName, e);
       }
 
 

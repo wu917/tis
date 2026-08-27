@@ -190,9 +190,14 @@ public class ConfigFileReader {
 
         @Override
         public ConfigFileValidateResult validate(ISchemaPluginContext schemaPlugin, UploadResource resource) {
-            // feature/chatbi-only 裁剪：schema 解析器(SolrFieldsParser)已随 tis-solrconfig-parser 移除
+            // feature/chatbi-only 裁剪：schema 解析器(SolrFieldsParser)已随 tis-solrconfig-parser 移除。
+            // 不做静默放行——未校验的 schema 一律拒绝入库并显式报错。
             Objects.requireNonNull(resource, "resource can not be null");
-            return new ConfigFileValidateResult();
+            ConfigFileValidateResult result = new ConfigFileValidateResult();
+            result.setValid(false);
+            result.appendResult("schema 解析校验能力已随 tis-solrconfig-parser 在 chatbi-only 分支裁剪，"
+                    + "无法验证该 schema.xml 内容，已拒绝保存。如需保存请回退全量分支或引入独立 schema 校验插件。");
+            return result;
         }
 
         @Override

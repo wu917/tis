@@ -47,6 +47,8 @@ import java.util.Optional;
  */
 public class GetPipelineDetailTool extends McpTool {
 
+  private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(GetPipelineDetailTool.class);
+
   public static final String KEY_TABLES = "tables";
   private static final String KEY_READER_IMPL = "readerImpl";
   private static final String KEY_WRITER_IMPL = "writerImpl";
@@ -100,11 +102,15 @@ public class GetPipelineDetailTool extends McpTool {
               tablesArr.add(tab.getName());
             }
           }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+          logger.warn("pipeline:{} load selected tabs fail", pipelineName, e);
+          result.put("warning_tables", "加载表列表失败: " + e.getMessage());
         }
         result.put(KEY_TABLES, tablesArr);
       }
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      logger.error("pipeline:{} load reader fail", pipelineName, e);
+      result.put("error_reader", "Reader 加载失败: " + e.getMessage());
     }
 
     // Writer info
@@ -115,7 +121,9 @@ public class GetPipelineDetailTool extends McpTool {
           ((DataxWriter.BaseDataxWriterDescriptor) writer.getDescriptor()).getEndType());
         result.put(KEY_WRITER_IMPL, writer.getClass().getName());
       }
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      logger.error("pipeline:{} load writer fail", pipelineName, e);
+      result.put("error_writer", "Writer 加载失败: " + e.getMessage());
     }
 
     return ExecuteResult.createSuccess(result);

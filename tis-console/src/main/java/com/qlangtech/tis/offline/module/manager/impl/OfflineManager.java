@@ -58,6 +58,8 @@ import java.util.*;
  */
 public class OfflineManager {
 
+  private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(OfflineManager.class);
+
   private IWorkflowDAOFacade workflowDAOFacade;
 
   public static DataxReader getDBDataxReader(IPluginContext pluginContext, String dbName) {
@@ -739,6 +741,8 @@ public class OfflineManager {
       DocumentBuilder builder = factory.newDocumentBuilder();
       builder.parse(is);
     } catch (Exception e) {
+      // 校验失败必须记录原因，静默返回 false 无法排查
+      logger.warn("JoinRule xml validate fail: {}", e.getMessage(), e);
       result = false;
     }
     return result;
@@ -871,7 +875,7 @@ public class OfflineManager {
     try {
       GitUtils.$().deleteWorkflowBranch(workFlow.getName());
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error("delete git branch:{} fail", workFlow.getName(), e);
       action.addErrorMessage(context, "删除分支" + workFlow.getName() + "失败");
       action.addErrorMessage(context, e.getMessage());
       return;

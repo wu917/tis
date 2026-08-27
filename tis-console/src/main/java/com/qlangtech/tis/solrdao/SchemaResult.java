@@ -66,18 +66,15 @@ public class SchemaResult extends SchemaMetaContent {
 
     /**
      * feature/chatbi-only: 原实现基于 SolrFieldsParser 解析校验 schema.xml，
-     * 该解析器已随 tis-solrconfig-parser 裁剪，此处仅保留解析链路占位（不再校验）。
+     * 该解析器已随 tis-solrconfig-parser 一并裁剪——本版本不支持 schema 解析校验。
+     * 此处必须快速失败：绝不能返回"解析成功"的假结果让未校验的配置入库。
      */
     public static SchemaResult parseSchemaResult(com.qlangtech.tis.runtime.module.misc.IMessageHandler module,
                                                  com.alibaba.citrus.turbine.Context context, byte[] schemaContent, boolean shallValidate
             , ISchemaFieldTypeContext schemaPlugin) {
-        if (schemaContent == null) {
-            throw new IllegalStateException("schemaContent can not be null");
-        }
-        if (schemaPlugin == null) {
-            throw new IllegalArgumentException("param schemaPlugin can not be null");
-        }
-        return create(null, schemaContent);
+        throw new UnsupportedOperationException(
+                "Solr schema 解析能力已随 tis-solrconfig-parser 在 chatbi-only 分支裁剪，"
+                        + "不再支持 schema 解析校验。如需该能力请回退全量分支或引入独立 schema 校验插件。");
     }
 
 

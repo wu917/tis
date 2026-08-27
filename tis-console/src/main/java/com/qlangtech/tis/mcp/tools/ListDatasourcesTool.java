@@ -49,6 +49,8 @@ import java.util.Optional;
  */
 public class ListDatasourcesTool extends McpTool {
 
+  private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ListDatasourcesTool.class);
+
   private static final String KEY_JDBC_URL = "jdbcUrl";
   private static final String KEY_DATASOURCES = "datasources";
 
@@ -108,7 +110,9 @@ public class ListDatasourcesTool extends McpTool {
             datasources.add(dsJson);
           }
         }
-      } catch (Exception ignored) {
+      } catch (Exception e) {
+        // 单个数据源加载失败可跳过继续枚举，但必须记录，否则结果集会静默缺失
+        logger.warn("datasource:{} load plugin/dbConfig fail, skip it from list", db.getName(), e);
       }
 
     }
