@@ -212,10 +212,7 @@ public class PlanGenerator {
       paimonIncrStep.setDescription("配置Paimon实时数据写入");
       plan.addStep(paimonIncrStep);
 
-      // 启动增量同步
-      TaskStep startIncrStep = new TaskStep("启动增量同步任务", TaskStep.StepType.EXECUTE_INCR);
-      startIncrStep.setDescription("启动实时增量数据同步");
-      plan.addStep(startIncrStep);
+      // feature/chatbi-only: 「启动增量同步」步骤已随 PipelineIncrExecutor 裁剪
     }
   }
 
@@ -255,8 +252,6 @@ public class PlanGenerator {
     //    sourceEnd.setEndTypeMeta(endMeta);
     //    plan.getTargetEnd().setEndTypeMeta(endMeta);
 
-    TaskStep incrStep = new TaskStep("增量实时数据同步启动", TaskStep.StepType.EXECUTE_INCR);
-    incrStep.setDescription("构建增量实时数据同步通道");
-    plan.addStep(incrStep);
+    // feature/chatbi-only: 增量同步启动步骤已裁剪
   }
 }

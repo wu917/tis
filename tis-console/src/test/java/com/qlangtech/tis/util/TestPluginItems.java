@@ -31,7 +31,6 @@ import com.qlangtech.tis.plugin.ds.ISelectedTab;
 import com.qlangtech.tis.datax.impl.DataxReader;
 import com.qlangtech.tis.extension.PluginFormProperties;
 import com.qlangtech.tis.manage.common.*;
-import com.qlangtech.tis.offline.module.action.OfflineDatasourceAction;
 import com.qlangtech.tis.plugin.KeyedPluginStore;
 import com.qlangtech.tis.plugin.PluginStubUtils;
 import com.qlangtech.tis.runtime.module.misc.IControlMsgHandler;
@@ -62,7 +61,7 @@ public class TestPluginItems extends TestCase {
     HttpUtils.addMockGlobalParametersConfig();
     List<Option> opts = Lists.newArrayList();
     opts.add(new Option("orderdb", "orderdb"));
-    OfflineDatasourceAction.existDbs = opts;
+
     DataxAction.cleanDepsCache();
     this.readerStore = DataxReader.getPluginStore(null, dataXName);
     File targetFile = readerStore.getTargetFile().getFile();

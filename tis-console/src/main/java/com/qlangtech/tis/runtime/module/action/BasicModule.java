@@ -35,8 +35,6 @@ import com.qlangtech.tis.assemble.ExecResult;
 import com.qlangtech.tis.assemble.FullbuildPhase;
 import com.qlangtech.tis.assemble.TriggerType;
 import com.qlangtech.tis.cloud.ITISCoordinator;
-import com.qlangtech.tis.config.module.action.CollectionAction;
-import com.qlangtech.tis.coredefine.module.action.CoreAction;
 import com.qlangtech.tis.coredefine.module.action.PluginAction;
 import com.qlangtech.tis.coredefine.module.action.ProcessModel;
 import com.qlangtech.tis.coredefine.module.action.TargetResName;
@@ -84,6 +82,9 @@ import com.qlangtech.tis.manage.common.MockContext;
 import com.qlangtech.tis.manage.common.Module;
 import com.qlangtech.tis.manage.common.Option;
 import com.qlangtech.tis.manage.common.RunContext;
+import com.qlangtech.tis.manage.biz.dal.pojo.Server;
+import com.qlangtech.tis.manage.biz.dal.pojo.ServerGroupCriteria;
+import com.qlangtech.tis.manage.biz.dal.pojo.SnapshotCriteria;
 import com.qlangtech.tis.manage.common.RunContextGetter;
 import com.qlangtech.tis.manage.common.TisUTF8;
 import com.qlangtech.tis.manage.common.UserUtils;
@@ -103,9 +104,8 @@ import com.qlangtech.tis.runtime.module.misc.DefaultMessageHandler;
 import com.qlangtech.tis.runtime.module.misc.IControlMsgHandler;
 import com.qlangtech.tis.runtime.module.misc.IFieldErrorHandler;
 import com.qlangtech.tis.runtime.module.misc.impl.DelegateControl4JavaBeanMsgHandler;
+import com.qlangtech.tis.runtime.module.screen.BasicScreen;
 import com.qlangtech.tis.runtime.pojo.ServerGroupAdapter;
-import com.qlangtech.tis.sql.parser.er.ERRules;
-import com.qlangtech.tis.sql.parser.er.IERRulesGetter;
 import com.qlangtech.tis.util.IPluginContext;
 import com.qlangtech.tis.util.IUploadPluginMeta;
 import com.qlangtech.tis.util.UploadPluginMeta;
@@ -154,8 +154,7 @@ import static com.qlangtech.tis.util.UploadPluginMeta.KEY_SKIP_PLUGINS_SAVE;
  * @author 百岁（baisui@qlangtech.com）
  * @date 2014年4月18日下午7:58:02
  */
-public abstract class BasicModule extends ActionSupport implements RunContext, IControlMsgHandler, IPluginContext,
-  IERRulesGetter {
+public abstract class BasicModule extends ActionSupport implements RunContext, IControlMsgHandler, IPluginContext {
 
   public static final long serialVersionUID = 1L;
   public static final String KEY_PLUGIN = "plugin";
@@ -166,14 +165,7 @@ public abstract class BasicModule extends ActionSupport implements RunContext, I
   private final Context context = new MockContext();
   protected IClusterSnapshotDAO clusterSnapshotDAO;
   protected IWorkflowDAOFacade wfDAOFacade;
-  private IERRulesGetter erRulesGetter;
   protected OfflineManager offlineManager;
-
-  @Override
-  public Optional<ERRules> getErRules(String dfName) {
-    Objects.requireNonNull(erRulesGetter, "erRulesGetter can not be null");
-    return erRulesGetter.getErRules(dfName);
-  }
 
   @Override
   public List<UploadPluginMeta> getPluginMeta() {
@@ -254,14 +246,39 @@ public abstract class BasicModule extends ActionSupport implements RunContext, I
 
   /**
    * 该应用下的第0组配置
+   * <p>
+   * feature/chatbi-only: 原 CoreAction.getServerGroup0 已随 CoreAction 移除，逻辑内联至此。
    *
    * @return
    */
   protected ServerGroupAdapter getServerGroup0() {
     final AppDomainInfo domain = CheckAppDomainExistValve.getAppDomain(this);
-    return CoreAction.getServerGroup0(domain, this);
-  }
+    List<ServerGroupAdapter> groupList = BasicScreen.createServerGroupAdapterList(new BasicScreen.ServerGroupCriteriaSetter() {
 
+      @Override
+      public void process(ServerGroupCriteria.Criteria criteria) {
+        criteria.andAppIdEqualTo(domain.getAppid()).andRuntEnvironmentEqualTo(domain.getRunEnvironment().getId());
+        criteria.andGroupIndexEqualTo((short) 0);
+        criteria.andPublishSnapshotIdIsNotNull();
+      }
+
+      @Override
+      public List<Server> getServers(RunContext daoContext, ServerGroup group) {
+        return Collections.emptyList();
+      }
+
+      @Override
+      public int getMaxSnapshotId(ServerGroup group, RunContext daoContext) {
+        SnapshotCriteria snapshotCriteria = new SnapshotCriteria();
+        snapshotCriteria.createCriteria().andAppidEqualTo(group.getAppId());
+        return daoContext.getSnapshotDAO().getMaxSnapshotId(snapshotCriteria);
+      }
+    }, true, this);
+    for (ServerGroupAdapter group : groupList) {
+      return group;
+    }
+    return null;
+  }
   public WorkFlow loadDF(Integer wfId) {
     WorkFlow workFlow = this.getWorkflowDAOFacade().getWorkFlowDAO().loadFromWriteDB(wfId);
     return Objects.requireNonNull(workFlow, "wfId:" + wfId + " relevant wf can not be null");
@@ -1168,11 +1185,6 @@ public abstract class BasicModule extends ActionSupport implements RunContext, I
   @Autowired
   public final void setRunContextGetter(RunContextGetter daoContextGetter) {
     this.daoContextGetter = daoContextGetter;
-  }
-
-  @Autowired
-  public void setErRulesGetter(IERRulesGetter erRulesGetter) {
-    this.erRulesGetter = erRulesGetter;
   }
 
   @Override

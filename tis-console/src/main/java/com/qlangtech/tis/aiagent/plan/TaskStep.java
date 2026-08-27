@@ -21,7 +21,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.qlangtech.tis.aiagent.core.AgentContext;
 import com.qlangtech.tis.aiagent.execute.StepExecutor;
 import com.qlangtech.tis.aiagent.execute.impl.PipelineBatchExecutor;
-import com.qlangtech.tis.aiagent.execute.impl.PipelineIncrExecutor;
 import com.qlangtech.tis.aiagent.execute.impl.PipelineSourceSelectTabsExecutor;
 import com.qlangtech.tis.aiagent.execute.impl.PluginDownloadAndInstallExecutor;
 import com.qlangtech.tis.aiagent.execute.impl.PluginInstanceCreateExecutor;
@@ -54,7 +53,7 @@ public class TaskStep {
     PLUGIN_CREATE(new PluginInstanceCreateExecutor()),
     USER_INPUT(null),
     EXECUTE_BATCH(new PipelineBatchExecutor()),
-    EXECUTE_INCR(new PipelineIncrExecutor()),
+    // feature/chatbi-only: EXECUTE_INCR 已随 PipelineIncrExecutor 裁剪
     SELECT_TABLES(new PipelineSourceSelectTabsExecutor());
 
     private final StepExecutor executor;

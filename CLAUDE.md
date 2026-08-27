@@ -153,11 +153,14 @@ TIS 是新一代 **AI 原生数据集成平台**：底层为经过生产验证�
 
 ### 三、chatbi-only 分支的实际裁剪结果（2026-08-27）
 
-- **彻底移除**（目录已删 + 根 POM 移除）：xmodifier、tis-hadoop-rpc、tis-solrconfig-parser、tis-assemble、tis-dag、tis-sql-parser、tis-scala-compiler、tis-k8s、tis-collection-info-collect
-- **源码级真解耦**：tis-plugin 去除 xmodifier 依赖与 `plugin.solr.schema` 包；tis-common 去除 solrconfig-parser 依赖（ConfigFileReader schema 校验中和）；console 删除死代码 `LogFeedbackServlet`/`FlinkJobsMonitor`/`ViewPojo` 及其死测试
-- **stub 化保活**：console 版 `SchemaResult` 迁入本地并免解析化；`SchemaAction.createSchema/mergeWfColsWithTplCollection/createSchemaPlugin` 等退化为原样返回——schema 校验链路保留壳但不再解析
-- **远程构件依赖（技术债，待专项清理）**：console 的 pom 仍声明 tis-dag/tis-hadoop-rpc/tis-scala-compiler/xmodifier/tis-solrconfig-parser/solrconfig-parser 依赖，实际解析自 rdc-releases 已发布的 5.1.0 jar。因 CoreAction/CollectionAction 的 DataX 管理域 Action 与 compiler/sql-parser 类深层纠缠（generateDAOAndIncrScript 家族等），本分支未硬删。后续如需纯化，须以"重建精简控制台"级别项目推进
-- **验证命令**：JDK17 + `mvn clean install -Dmaven.test.skip=true` 全仓 BUILD SUCCESS（14 模块）；tis-console test-compile 通过
+**第一轮**：根 POM 移除并删除 9 个模块目录（xmodifier、tis-hadoop-rpc、tis-solrconfig-parser、tis-assemble、tis-dag、tis-sql-parser、tis-scala-compiler、tis-k8s、tis-collection-info-collect）；tis-plugin 删 `plugin.solr.schema` 包。
+
+**第二轮（外部依赖清零）**：保留模块 POM 已零引用已删模块，main+test 编译完全基于仓内源码：
+- console：删 `CoreAction`（compiler/sql-parser 双重硬耦合）、`CollectionAction`（hadoop-rpc）、`PipelineIncrExecutor` 及 TaskStep.EXECUTE_INCR 步骤、Solr 向导端点（doCreateCollection/doAdvanceAddApp/doGetTplFields/mergeWfColsWithTplCollection/ExtendApp.createAppSource）、死测试若干
+- 迁移：`WorkflowDAGFileManager`→ tis-plugin（builder-api 依赖方向不符）；`SchemaResult`/`CoreRequest.createIps` 就地内联；`StreamContextConstant.getStreamScriptRootDir` 路径工具本地化进 DataxAction
+- stub 化：OfflineManager 的 SqlTaskNodeMeta 触点；DataxAction 增量状态探测退化为 NONE；BasicModule.getServerGroup0 内联并摘除 IERRulesGetter 实现
+- 零依赖原则落地：`javax.annotation.Nullable` → `org.springframework.lang.Nullable`（复用 spring-core，不新增 jar）
+- 根 POM dependencyManagement 清理已删模块条目；新增 rdc-releases 私仓（https，Maven 3.8+ 屏蔽 http）解析 tis-ibatis/tisasm 等不可替代的外部自研构件
 
 ## 常用命令
 

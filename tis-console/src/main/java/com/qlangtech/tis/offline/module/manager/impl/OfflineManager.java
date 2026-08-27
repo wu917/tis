@@ -29,13 +29,11 @@ import com.qlangtech.tis.manage.biz.dal.pojo.Application;
 import com.qlangtech.tis.manage.biz.dal.pojo.ApplicationCriteria;
 import com.qlangtech.tis.manage.common.Option;
 import com.qlangtech.tis.offline.DbScope;
-import com.qlangtech.tis.offline.module.action.OfflineDatasourceAction;
 import com.qlangtech.tis.offline.pojo.TISDb;
 import com.qlangtech.tis.offline.pojo.WorkflowPojo;
 import com.qlangtech.tis.plugin.KeyedPluginStore;
 import com.qlangtech.tis.plugin.ds.*;
 import com.qlangtech.tis.runtime.module.action.BasicModule;
-import com.qlangtech.tis.sql.parser.SqlTaskNodeMeta;
 import com.qlangtech.tis.util.IPluginContext;
 import com.qlangtech.tis.workflow.dao.IDatasourceDbDAO;
 import com.qlangtech.tis.workflow.dao.IWorkflowDAOFacade;
@@ -237,8 +235,20 @@ public class OfflineManager {
     }
 
     public String getExtraSql() {
-      return SqlTaskNodeMeta.processBigContent(tabReflect.getSql());
+      // feature/chatbi-only: SqlTaskNodeMeta 已随 tis-sql-parser 移除，本地等价实现（原逻辑为超长 SQL 摘要截断）
+      return processBigContent(tabReflect.getSql());
     }
+  }
+
+  /**
+   * feature/chatbi-only: 本地等价实现，替代 SqlTaskNodeMeta.processBigContent
+   */
+  private static String processBigContent(String content) {
+    final int maxLength = 512;
+    if (content == null || content.length() <= maxLength) {
+      return StringUtils.trimToEmpty(content);
+    }
+    return content.substring(0, maxLength) + "...";
   }
 
   /**
@@ -415,35 +425,7 @@ public class OfflineManager {
     }
   }
 
-  /**
-   * description: 获取所有的数据源 date: 7:43 PM 5/19/2017
-   */
-  public Collection<OfflineDatasourceAction.DatasourceDb> getDatasourceInfo(Optional<String> dsNameLike) throws Exception {
-    DatasourceDbCriteria criteria = new DatasourceDbCriteria();
-    DatasourceDbCriteria.Criteria query = criteria.createCriteria();
-    dsNameLike.ifPresent((dsName) -> {
-      query.andNameLike("%" + dsName + "%");
-    });
-
-    List<DatasourceDb> dbList = workflowDAOFacade.getDatasourceDbDAO().selectByExample(criteria);
-    //DatasourceTableCriteria tableCriteria = new DatasourceTableCriteria();
-    //tableCriteria.createCriteria();
-    // List<DatasourceTable> tableList = workflowDAOFacade.getDatasourceTableDAO().selectByExample(tableCriteria);
-    Map<Integer, OfflineDatasourceAction.DatasourceDb> dbsMap = new HashMap<>();
-    OfflineDatasourceAction.DatasourceDb dsDb = null;
-    for (DatasourceDb db : dbList) {
-      if (StringUtils.isEmpty(db.getExtendClass())) {
-        continue;
-      }
-
-      dsDb = new OfflineDatasourceAction.DatasourceDb(db.getId(), db.getExtendClass(), db.getOpTime());
-      dsDb.setName(db.getName());
-
-      dbsMap.put(db.getId(), dsDb);
-    }
-
-    return dbsMap.values();
-  }
+  // feature/chatbi-only: getDatasourceInfo 已移除（无调用方，且依赖已裁剪的 OfflineDatasourceAction 内部类）
 
   public DBConfigSuit getDbConfig(IPluginContext pluginContext, DatasourceDb db) {
     Objects.requireNonNull(db, "instance of DatasourceDb can not be null");

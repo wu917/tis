@@ -33,7 +33,6 @@ import com.qlangtech.tis.manage.IAppSource;
 import com.qlangtech.tis.manage.common.Option;
 import com.qlangtech.tis.manage.common.OptionWithEndType;
 import com.qlangtech.tis.manage.servlet.BasicServlet;
-import com.qlangtech.tis.offline.module.action.OfflineDatasourceAction;
 import com.qlangtech.tis.plugin.IEndTypeGetter;
 import com.qlangtech.tis.plugin.IPluginStore;
 import com.qlangtech.tis.plugin.IPluginStoreSave;
@@ -281,10 +280,7 @@ public class PluginItems implements IPluginItemsProcessor {
    * @return
    */
   public static List<Option> getExistDbs(String... extendClass) {
-    if (OfflineDatasourceAction.existDbs != null) {
-      return OfflineDatasourceAction.existDbs;
-    }
-
+    // feature/chatbi-only: OfflineDatasourceAction 已移除，不再有页面级已选 DB 缓存
     //    Function<DBIdentity, Option> optMapper =
     //      (extendClass.length == 1 && KEY_ALL_TYPE.equalsIgnoreCase(extendClass[0])) //
     //        ? (dbId) -> {

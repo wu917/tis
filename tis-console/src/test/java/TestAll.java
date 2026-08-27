@@ -21,7 +21,6 @@ import com.qlangtech.tis.coredefine.module.action.TestPluginAction;
 import com.qlangtech.tis.coredefine.module.action.TestPluginItemsParser;
 import com.qlangtech.tis.manage.common.TestUserUtils;
 
-import com.qlangtech.tis.offline.module.action.TestOfflineDatasourceAction;
 import com.qlangtech.tis.plugin.TestPluginAndCfgsSnapshotOnWorkflow;
 import com.qlangtech.tis.runtime.module.action.TestSchemaAction;
 import com.qlangtech.tis.runtime.module.action.TestSysInitializeAction;
@@ -42,7 +41,6 @@ public class TestAll extends TestCase {
     suite.addTestSuite(TestSysInitializeAction.class);
     suite.addTestSuite(TestSchemaAction.class);
     suite.addTestSuite(TestPluginAction.class);
-    suite.addTestSuite(TestOfflineDatasourceAction.class);
     suite.addTestSuite(TestDataXAction.class);
     suite.addTestSuite(TestUserUtils.class);
     suite.addTestSuite(TestPluginItemsParser.class);

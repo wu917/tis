@@ -77,9 +77,9 @@ import com.qlangtech.tis.manage.common.AppDomainInfo;
 import com.qlangtech.tis.manage.common.ManageUtils;
 import com.qlangtech.tis.manage.common.Option;
 import com.qlangtech.tis.manage.common.RunContext;
+import com.qlangtech.tis.manage.common.Config;
 import com.qlangtech.tis.manage.common.TisUTF8;
 import com.qlangtech.tis.manage.common.apps.IDepartmentGetter;
-import com.qlangtech.tis.manage.common.incr.StreamContextConstant;
 import com.qlangtech.tis.manage.common.valve.AjaxValve;
 import com.qlangtech.tis.manage.servlet.BasicServlet;
 import com.qlangtech.tis.manage.spring.aop.Func;
@@ -151,6 +151,19 @@ import static com.qlangtech.tis.util.AttrValMap.PLUGIN_EXTENSION_IMPL;
 @InterceptorRefs({@InterceptorRef("tisStack")})
 public class DataxAction extends BasicModule {
   private static final Logger logger = LoggerFactory.getLogger(DataxAction.class);
+
+  // feature/chatbi-only: StreamContextConstant 常量已随 tis-sql-parser 裁剪，此处本地化路径工具
+  private static final String KEY_DIR_TRASH_NAME = ".trash";
+  private static final String DIR_STREAMS_SCRIPT = "streamscript";
+
+  private static File streamScriptRootDir(String collectionName) {
+    return new File(Config.getMetaCfgDir() + "/" + DIR_STREAMS_SCRIPT + "/" + collectionName);
+  }
+
+  private static File streamScriptRootDirTrash(String collectionName) {
+    return new File(Config.getMetaCfgDir() + "/" + DIR_STREAMS_SCRIPT + "/" + KEY_DIR_TRASH_NAME + "/" + collectionName);
+  }
+
   private static final String PARAM_KEY_DATAX_NAME = StoreResourceType.DATAX_NAME;
 
   //  @Func(value = PermissionConstant.DATAX_MANAGE)
@@ -1044,8 +1057,8 @@ public class DataxAction extends BasicModule {
       // 判断增量实例是否存在
       IFlinkIncrJobStatus.State state = null;
       try {
-        IndexIncrStatus incrStatus = CoreAction.getIndexIncrStatus(this.getTISDataXName(), true);
-        state = incrStatus.getState();
+        // feature/chatbi-only: CoreAction.getIndexIncrStatus 已随 CoreAction 移除，增量实例状态探测退化为 NONE
+        state = IFlinkIncrJobStatus.State.NONE;
       } catch (Throwable e) {
         logger.error(e.getMessage(), e);
         state = IFlinkIncrJobStatus.State.NONE;
@@ -1055,8 +1068,8 @@ public class DataxAction extends BasicModule {
         return;
       }
       //增量配置脚本移位置
-      scriptRootDir = StreamContextConstant.getStreamScriptRootDir(appDomain.getAppName());
-      scriptDootDirTrash = StreamContextConstant.getStreamScriptRootDir(appDomain.getAppName(), true).getFile();
+      scriptRootDir = streamScriptRootDir(appDomain.getAppName());
+      scriptDootDirTrash = streamScriptRootDirTrash(appDomain.getAppName());
       if (scriptRootDir.exists()) {
         FileUtils.moveDirectory(scriptRootDir, scriptDootDirTrash);
       }
@@ -1065,7 +1078,7 @@ public class DataxAction extends BasicModule {
       IRepositoryResource appSource = IAppSource.getPluginStore(this, appDomain.getAppName());
       dataXDir = appSource.getTargetFile().getFile().getParentFile();
       dataXDirTrash = new File(dataXDir.getParentFile(),
-        StreamContextConstant.KEY_DIR_TRASH_NAME + "/" + appDomain.getAppName());
+        KEY_DIR_TRASH_NAME + "/" + appDomain.getAppName());
       if (dataXDir.exists()) {
         FileUtils.moveDirectory(dataXDir, dataXDirTrash);
       }

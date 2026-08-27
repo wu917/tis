@@ -196,12 +196,6 @@
             </dependency>
 
             <dependency>
-                <groupId>com.qlangtech.tis</groupId>
-                <artifactId>xmodifier</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
                 <!--running DB in embedded model https://db.apache.org/derby/docs/10.15/getstart/index.html-->
                 <groupId>org.apache.derby</groupId>
                 <artifactId>derby</artifactId>
@@ -233,12 +227,6 @@
                 <version>1.6</version>
             </dependency>
 
-
-            <dependency>
-                <groupId>com.qlangtech.tis</groupId>
-                <artifactId>tis-hadoop-rpc</artifactId>
-                <version>${project.version}</version>
-            </dependency>
 
             <!--            <dependency>-->
             <!--                <groupId>com.qlangtech.tis</groupId>-->
@@ -340,12 +328,6 @@
                 <artifactId>tis-common</artifactId>
                 <version>${project.version}</version>
                 <scope>provided</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>com.qlangtech.tis</groupId>
-                <artifactId>tis-sql-parser</artifactId>
-                <version>${project.version}</version>
             </dependency>
 
 <!--            <dependency>-->
@@ -468,105 +450,6 @@
                 <artifactId>jetty-ee11-servlet</artifactId>
                 <version>${jetty.version}</version>
                 <scope>provided</scope>
-            </dependency>
-
-
-            <dependency>
-                <groupId>com.qlangtech.tis</groupId>
-                <artifactId>tis-solrconfig-parser</artifactId>
-                <version>${project.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-analyzers-common</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-analyzers-kuromoji</artifactId>
-                    </exclusion>
-
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-analyzers-phonetic</artifactId>
-                    </exclusion>
-
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-backward-codecs</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-codecs</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-expressions</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-expressions</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-expressions</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-grouping</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-highlighter</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-join</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-memory</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-misc</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-queries</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-queryparser</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-sandbox</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-spatial</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.apache.lucene</groupId>
-                        <artifactId>lucene-suggest</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>commons-logging</groupId>
-                        <artifactId>commons-logging</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>log4j</groupId>
-                        <artifactId>log4j</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.ow2.asm</groupId>
-                        <artifactId>asm</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.ow2.asm</groupId>
-                        <artifactId>asm-commons</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
 
             <dependency>

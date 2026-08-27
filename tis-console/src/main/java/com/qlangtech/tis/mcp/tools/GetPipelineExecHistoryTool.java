@@ -38,8 +38,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.List;
 import java.util.Optional;
 
-import static com.qlangtech.tis.config.module.action.CollectionAction.KEY_QUERY_LIMIT;
-
 /**
  * 获取指定管道最近N次批量同步的执行记录
  *
@@ -47,6 +45,8 @@ import static com.qlangtech.tis.config.module.action.CollectionAction.KEY_QUERY_
  * @date 2026/4/7
  */
 public class GetPipelineExecHistoryTool extends McpTool {
+
+  private static final String KEY_QUERY_LIMIT = "limit";
   private static final String KEY_STATUS = "status";
   private static final String KEY_START_TIME = "startTime";
   private static final String KEY_END_TIME = "endTime";

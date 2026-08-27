@@ -32,7 +32,6 @@ import com.qlangtech.tis.datax.StoreResourceType;
 import com.qlangtech.tis.datax.impl.DataxProcessor;
 import com.qlangtech.tis.datax.impl.ESTableAlias;
 import com.qlangtech.tis.fullbuild.indexbuild.LuceneVersion;
-import com.qlangtech.tis.manage.ISolrAppSource;
 import com.qlangtech.tis.manage.PermissionConstant;
 import com.qlangtech.tis.manage.Savefilecontent;
 import com.qlangtech.tis.manage.biz.dal.dao.IServerGroupDAO;
@@ -75,7 +74,6 @@ import com.qlangtech.tis.trigger.util.JsonUtil;
 import com.qlangtech.tis.utils.MD5Utils;
 import com.qlangtech.tis.workflow.pojo.WorkFlow;
 import com.qlangtech.tis.workflow.pojo.WorkFlowCriteria;
-import com.yushu.tis.xmodifier.XModifier;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -171,51 +169,9 @@ public class SchemaAction extends BasicModule {
     this.setBizResult(context, tplSchema.toJSON());
   }
 
-  /**
-   * 创建新索引流程取得通过workflow反射Schema 生成索引
-   *
-   * @param context
-   * @throws Exception
-   */
-  public void doGetTplFields(Context context) throws Exception {
-    AddAppAction.ExtendApp app = this.parseJsonPost(AddAppAction.ExtendApp.class);
-    CreateAppResult validateResult = this.createNewApp(context, app, -1, /* publishSnapshotId */
-      null, /* schemaContent */
-      true);
-    if (!validateResult.isSuccess()) {
-      return;
-    }
+  // feature/chatbi-only: doGetTplFields / mergeWfColsWithTplCollection 已裁剪
+  // （依赖 tis-dag 的 ISolrAppSource 链路，属 Solr schema 生成域）
 
-    ISolrAppSource appSource = app.createAppSource(this);
-    SchemaResult tplSchema = mergeWfColsWithTplCollection(this, context, appSource, ISchemaPluginContext.NULL);
-    Objects.requireNonNull(tplSchema, "tplSchema can not be null");
-    // 序列化结果
-    this.setBizResult(context, tplSchema.toJSON());
-  }
-
-  /**
-   * 通过解析workflow的最终导出的字段，来生成Schema配置
-   * <p>
-   * feature/chatbi-only: 原实现基于 SolrFieldsParser/XModifier 合并 workflow 字段到模板 schema，
-   * 解析器与 XML 改写器已随 tis-solrconfig-parser/xmodifier 裁剪，此处退化为直接返回模板 schema 原样内容。
-   *
-   * @param module
-   * @param context
-   * @param appSource
-   * @return
-   * @throws Exception
-   */
-  public static SchemaResult mergeWfColsWithTplCollection(BasicModule module, Context context,
-                                                          ISolrAppSource appSource,
-                                                          final ISchemaPluginContext schemaPlugin) throws Exception {
-    // 通过version取默认模板
-    Application tplApp = getTemplateApp(module);
-    SchemaResult tplSchema = getTemplateSchema(module, context, tplApp);
-    if (!tplSchema.isSuccess()) {
-      return null;
-    }
-    return tplSchema;
-  }
 
 
   private static SchemaResult getTemplateSchema(BasicModule module, Context context, Application tplApp) throws Exception {

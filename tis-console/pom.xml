@@ -78,22 +78,10 @@
 
     <dependency>
       <groupId>com.qlangtech.tis</groupId>
-      <artifactId>tis-hadoop-rpc</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.qlangtech.tis</groupId>
       <artifactId>tis-common-dao</artifactId>
       <scope>provided</scope>
     </dependency>
 
-    <dependency>
-      <groupId>com.qlangtech.tis</groupId>
-      <artifactId>tis-dag</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
 
     <dependency>
       <!--running DB in embedded model https://db.apache.org/derby/docs/10.15/getstart/index.html-->
@@ -132,11 +120,6 @@
     </dependency>
 
 
-    <dependency>
-      <groupId>com.qlangtech.tis</groupId>
-      <artifactId>tis-scala-compiler</artifactId>
-      <version>${project.version}</version>
-    </dependency>
 
     <dependency>
       <groupId>com.qlangtech.tis</groupId>
@@ -165,11 +148,6 @@
       <artifactId>asm-commons</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>com.qlangtech.tis</groupId>
-      <artifactId>xmodifier</artifactId>
-      <version>${project.version}</version>
-    </dependency>
 
     <dependency>
       <groupId>ch.qos.logback</groupId>
@@ -249,10 +227,6 @@
       <artifactId>tis-web-start</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>com.qlangtech.tis</groupId>
-      <artifactId>tis-solrconfig-parser</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>org.slf4j</groupId>

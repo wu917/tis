@@ -17,7 +17,7 @@
  */
 package com.qlangtech.tis.coredefine.biz;
 
-import com.qlangtech.tis.coredefine.module.action.CoreAction.CoreRequest;
+import com.qlangtech.tis.runtime.module.action.AddAppAction.CoreRequest;
 import java.util.*;
 import java.util.stream.Collectors;
 

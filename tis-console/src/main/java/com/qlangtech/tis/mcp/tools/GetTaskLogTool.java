@@ -34,7 +34,6 @@ import java.io.FileReader;
 import java.util.LinkedList;
 import java.util.Optional;
 
-import static com.qlangtech.tis.config.module.action.CollectionAction.KEY_QUERY_LIMIT;
 
 /**
  * 获取指定任务的执行日志
@@ -43,6 +42,8 @@ import static com.qlangtech.tis.config.module.action.CollectionAction.KEY_QUERY_
  * @date 2026/4/7
  */
 public class GetTaskLogTool extends McpTool {
+
+  private static final String KEY_QUERY_LIMIT = "limit";
 
   private static final String KEY_LOGGER_LEVEL = "logLevel";
   private static final String KEY_LINES = "lines";

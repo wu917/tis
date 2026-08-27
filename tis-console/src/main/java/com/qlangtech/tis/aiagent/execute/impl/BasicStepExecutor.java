@@ -86,7 +86,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-import javax.annotation.Nullable;
+import org.springframework.lang.Nullable;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;

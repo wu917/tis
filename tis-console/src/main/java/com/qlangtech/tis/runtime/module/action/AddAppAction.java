@@ -24,14 +24,12 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.struts2.ModelDriven;
 import com.qlangtech.tis.coredefine.biz.FCoreRequest;
-import com.qlangtech.tis.coredefine.module.action.CoreAction;
 import com.qlangtech.tis.coredefine.module.control.SelectableServer;
 import com.qlangtech.tis.datax.IDataxProcessor;
 import com.qlangtech.tis.datax.StoreResourceTypeConstants;
 import com.qlangtech.tis.datax.impl.DataxProcessor;
 import com.qlangtech.tis.fullbuild.indexbuild.LuceneVersion;
 import com.qlangtech.tis.manage.IAppSource;
-import com.qlangtech.tis.manage.ISolrAppSource;
 import com.qlangtech.tis.manage.PermissionConstant;
 import com.qlangtech.tis.manage.biz.dal.pojo.*;
 import com.qlangtech.tis.manage.biz.dal.pojo.ApplicationCriteria.Criteria;
@@ -41,7 +39,6 @@ import com.qlangtech.tis.manage.common.RunContext;
 import com.qlangtech.tis.manage.common.apps.AppsFetcher.CriteriaSetter;
 import com.qlangtech.tis.manage.common.apps.IAppsFetcher;
 import com.qlangtech.tis.manage.common.ibatis.BooleanYorNConvertCallback;
-import com.qlangtech.tis.manage.impl.DataFlowAppSource;
 import com.qlangtech.tis.manage.servlet.DownloadServlet;
 import com.qlangtech.tis.manage.spring.aop.Func;
 import com.qlangtech.tis.offline.module.manager.impl.OfflineManager;
@@ -125,116 +122,40 @@ public class AddAppAction extends SchemaAction implements ModelDriven<Applicatio
     this.setBizResult(context, nodes);
   }
 
-  /**
-   * 创建索引，不在数据库中添加记录<br>
-   * 当一个索引创建之后又被删除了，又需要重新创建就需要需执行该流程了
-   *
-   * @param context
-   * @throws Exception
-   */
-  @Func(PermissionConstant.APP_ADD)
-  public void doCreateCollection(Context context) throws Exception {
-    CreateIndexConfirmModel confiemModel = parseJsonPost(CreateIndexConfirmModel.class);
-    confiemModel.setTplAppId(getTemplateApp(this).getAppId());
-    SchemaResult schemaResult = this.parseSchema(context, ISchemaPluginContext.NULL, confiemModel);
-
-    this.createCollection(context, confiemModel, schemaResult, (ctx, app, publishSnapshotId, schemaContent) -> {
-      CreateSnapshotResult result = new CreateSnapshotResult();
-      result.setSuccess(true);
-      Application a = getApplicationDAO().selectByName(app.getProjectName());
-      if (a == null) {
-        throw new IllegalStateException("appname:" + app.getProjectName() + " relevant app can not be find in DB");
-      }
-      result.setNewSnapshotId(getPublishSnapshotId(this.getServerGroupDAO(), a));
-      return result;
-    });
+  public static CoreRequest createIps(Context context, final String appName, String[] ips) {
+    CoreRequest request = new CoreRequest();
+    request.setIncludeIps(ips);
+    request.setServiceName(appName);
+    request.runtime = RunEnvironment.getSysRuntime();
+    return request;
   }
 
-  /**
-   * 高级添加,会在数据库中添加对象记录
-   *
-   * @param context
-   */
-  @Func(PermissionConstant.APP_ADD)
-  public void doAdvanceAddApp(Context context) throws Exception {
-    CreateIndexConfirmModel confiemModel = parseJsonPost(CreateIndexConfirmModel.class);
-    confiemModel.setTplAppId(getTemplateApp(this).getAppId());
-    SchemaResult schemaResult = this.parseSchema(context, ISchemaPluginContext.NULL, confiemModel);
-    if (!createNewApp(context, confiemModel.getAppform(), -1, /**
-       * publishSnapshotId
-       */
-      null, /* schemaContent */
-      true).isSuccess()) {
-      // 只作表单校验 表单校验不通过
-      return;
-    }
-    this.createCollection(context, confiemModel, schemaResult, (ctx, app, publishSnapshotId, schemaContent) -> {
-      return this.createNewApp(ctx, app, publishSnapshotId, schemaContent);
-    });
-  }
+  public static class CoreRequest {
 
-  protected Optional<Application> createCollection(Context context, CreateIndexConfirmModel confiemModel
-    , SchemaResult schemaResult, ICreateNewApp appCreator) throws Exception {
-    ExtendApp extApp = confiemModel.getAppform();
-    appendPrefix(extApp);
-    String workflow = confiemModel.getAppform().getWorkflow();
-    if (StringUtils.isBlank(workflow)) {
-      this.addErrorMessage(context, "缺少全量数据流信息");
-      return Optional.empty();
-    }
-    final String[] candidateNodeIps = confiemModel.getCoreNodeCandidate();
-    if (candidateNodeIps == null || candidateNodeIps.length < 1) {
-      this.addErrorMessage(context, "请选择引擎节点");
-      return Optional.empty();
-    }
-    if (!schemaResult.isSuccess()) {
-      return Optional.empty();
-    }
-    Application app = new Application();
-    app.setAppId(confiemModel.getTplAppId());
-    Integer publishSnapshotId = getPublishSnapshotId(this.getServerGroupDAO(), app);
-    byte[] content = schemaResult.content;
-    SelectableServer.ServerNodeTopology coreNode = confiemModel.getCoreNode();
-    final int gourpCount = coreNode.getShardCount();
-    int repliation = coreNode.getReplicaCount();
-    // 由于是在日常环境中，默认就是设置为 1*1
-    FCoreRequest request = new FCoreRequest(CoreAction.createIps(context, extApp.getProjectName(), candidateNodeIps), gourpCount);
-    for (String ip : candidateNodeIps) {
-      request.addNodeIps(gourpCount - 1, ip);
-    }
-    request.setValid(true);
-    CreateAppResult createResult = appCreator.createNewApp(context, extApp, publishSnapshotId, content);
-    if (!createResult.isSuccess()) {
-      return Optional.of(app);
+    private String[] ips;
+
+    private String serviceName;
+
+    private RunEnvironment runtime;
+
+    public void addNodeIps(String groupIndex, String ip) {
     }
 
-    IAppSource.save(this, extApp.getProjectName(), extApp.createAppSource(this));
-    /**
-     * *************************************************************************************
-     * 因为这里数据库的事务还没有提交，需要先将schema配置信息保存到缓存中去以便solrcore节点能获取到
-     * 设置缓存
-     * **************************************************************************************
-     */
-    final AppKey appKey = AppKey.create(extApp.getProjectName());
-//      new AppKey(extApp.getProjectName(), /* appName ========== */
-//      (short) 0, /* groupIndex */
-//      RunEnvironment.getSysRuntime(), false);
-
-    if (!(createResult instanceof CreateSnapshotResult)) {
-      throw new IllegalStateException("instance of createResult must be CreateSnapshotResult");
+    public void setIncludeIps(String[] ips) {
+      this.ips = ips;
     }
-    CreateSnapshotResult snapshotResult = (CreateSnapshotResult) createResult;
-    appKey.setTargetSnapshotId((long) snapshotResult.getNewId());
-    appKey.setFromCache(false);
-    appKeyProcess.process(appKey);
-    // LoadSolrCoreConfigByAppNameServlet.getSnapshotDomain(ConfigFileReader.getConfigList(), appKey, this);
-    CoreAction.createCollection(this, context, gourpCount, repliation, request, snapshotResult.getNewId());
-    return Optional.of(app);
-  }
 
-  public interface ICreateNewApp {
+    public void setServiceName(String serviceName) {
+      this.serviceName = serviceName;
+    }
 
-    public CreateAppResult createNewApp(Context context, ExtendApp app, int publishSnapshotId, byte[] schemaContent) throws Exception;
+    public String getServiceName() {
+      return serviceName;
+    }
+
+    public RunEnvironment getRunEnv() {
+      return this.runtime;
+    }
   }
 
   /**
@@ -672,33 +593,7 @@ public class AddAppAction extends SchemaAction implements ModelDriven<Applicatio
       this.workflow = val;
     }
 
-    public ISolrAppSource createAppSource(BasicModule module) {
-      if (AddAppAction.SOURCE_TYPE_SINGLE_TABLE.equals(this.getDsType())) {
-//        String[] tabCascadervalues = this.getTabCascadervalues();
-//        if (tabCascadervalues == null) {
-//          throw new IllegalStateException("tabCascadervalues can not be null");
-//        }
-//        //[ "196", "169%employees"];
-//        Integer dbId = Integer.parseInt(tabCascadervalues[0]);
-//        String[] pair = StringUtils.split(tabCascadervalues[1], "%");
-//        Integer tabId = Integer.parseInt(pair[0]);
-//        String tabName = StringUtils.trimToEmpty(pair[1]);
-//        DatasourceTable table = null;// module.wfDAOFacade.getDatasourceTableDAO().loadFromWriteDB(tabId);
-//        DatasourceDb db = module.wfDAOFacade.getDatasourceDbDAO().loadFromWriteDB(dbId);
-//        return new SingleTableAppSource(db, table);
-        throw new UnsupportedOperationException();
-      } else if (AddAppAction.SOURCE_TYPE_DF.equals(this.getDsType())) {
-        String workflowName = this.getWorkflow();
-        if (StringUtils.isEmpty(workflowName)) {
-          throw new IllegalStateException("workflowName can not be null");
-        }
-        String wfName = StringUtils.split(workflowName, ":")[1];
-        Integer wfId = Integer.parseInt(StringUtils.split(workflowName, ":")[0]);
-        IDataxProcessor process = DataxProcessor.load(module, StoreResourceType.DataFlow, wfName);
-        return new DataFlowAppSource(module.loadDF(wfId), process.getWriter(module, true));
-      }
-      throw new IllegalStateException("dsType:" + this.getDsType() + " is not illegal");
-    }
+    // feature/chatbi-only: createAppSource 已裁剪（依赖 tis-dag 的 DataFlowAppSource/SingleTableAppSource）
 
     public String[] getTabCascadervalues() {
       return tabCascadervalues;

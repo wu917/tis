@@ -25,7 +25,6 @@ import com.qlangtech.tis.datax.StoreResourceType;
 import com.qlangtech.tis.datax.impl.DataxProcessor;
 import com.qlangtech.tis.manage.common.CenterResource;
 import com.qlangtech.tis.manage.common.Option;
-import com.qlangtech.tis.offline.module.action.OfflineDatasourceAction;
 import com.qlangtech.tis.util.RobustReflectionConverter2;
 import junit.framework.TestCase;
 
@@ -45,7 +44,7 @@ public class TestPluginAndCfgsSnapshotOnWorkflow extends TestCase {
     CenterResource.setNotFetchFromCenterRepository();
     List<Option> opts = Lists.newArrayList();
     opts.add(new Option("orderdb", "orderdb"));
-    OfflineDatasourceAction.existDbs = opts;
+
   }
 
   public void testCreateDataBatchJobManifestCfgAttrsWithDataFlow() throws Exception {

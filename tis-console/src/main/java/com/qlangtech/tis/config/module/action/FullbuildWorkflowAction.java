@@ -39,7 +39,7 @@ import com.qlangtech.tis.manage.biz.dal.pojo.Application;
 import com.qlangtech.tis.manage.common.CreateNewTaskResult;
 import com.qlangtech.tis.manage.common.HttpUtils;
 import com.qlangtech.tis.manage.spring.aop.Func;
-import com.qlangtech.tis.offline.module.action.OfflineDatasourceAction;
+
 import com.qlangtech.tis.order.center.IParamContext;
 import com.qlangtech.tis.plugin.rate.IncrRateController;
 import com.qlangtech.tis.powerjob.model.PEWorkflowDAG;
@@ -127,7 +127,7 @@ public class FullbuildWorkflowAction extends BasicModule {
    *
    * @param context
    * @see com.qlangtech.tis.coredefine.module.action.DataxAction#doTriggerFullbuildTask(Context)
-   * @see OfflineDatasourceAction#doExecuteWorkflow(Context)
+   * @see #doExecuteWorkflow(Context)
    */
   public void doInitializeTriggerTask(Context context) {
     // 校验参数必须有
