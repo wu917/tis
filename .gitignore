@@ -19,3 +19,6 @@
 *.swp
 **/*.log
 .flattened-pom.xml
+
+# 本地运行时目录（init-local-dev.sh 生成）
+runtime/

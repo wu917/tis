@@ -31,7 +31,8 @@
   <context-param>
     <param-name>contextConfigLocation</param-name>
     <param-value>
-      classpath:/tis.application.context.xml,classpath:/tis.application.mockable.context.xml,classpath:/tis.flink.jobs.monitor.context.xml
+      <!-- feature/chatbi-only: tis.flink.jobs.monitor.context.xml 已裁剪(FlinkJobsMonitor 随 Flink 监控域移除) -->
+      classpath:/tis.application.context.xml,classpath:/tis.application.mockable.context.xml
     </param-value>
   </context-param>
 
@@ -89,7 +90,7 @@
     <url-pattern>/download/tasklogfeedback</url-pattern>
   </servlet-mapping>
 -->
-  <!-- websocket推送服务集群 中的日志 -->
+  <!-- feature/chatbi-only: LogFeedbackServlet 已裁剪(gRPC 日志回流属 Flink 链路)
   <servlet>
     <servlet-name>logfeedback</servlet-name>
     <servlet-class>com.qlangtech.tis.manage.servlet.LogFeedbackServlet</servlet-class>
@@ -98,6 +99,7 @@
     <servlet-name>logfeedback</servlet-name>
     <url-pattern>/download/logfeedback</url-pattern>
   </servlet-mapping>
+-->
 
   <!-- 通过 appname runtime groupindex 查找solr core的配置信息 -->
   <!--  <servlet>-->

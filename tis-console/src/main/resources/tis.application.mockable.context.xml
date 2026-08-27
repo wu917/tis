@@ -26,8 +26,6 @@
 <!--    <property name="zooKeeperGetter" ref="zooKeeperGetter"/>-->
 <!--  </bean>-->
 
-  <bean id="erRulesGetter" class="com.qlangtech.tis.sql.parser.er.impl.DefaultERRulesGetter">
-  </bean>
-
+  <!-- feature/chatbi-only: DefaultERRulesGetter 已随 tis-sql-parser 裁剪，erRulesGetter bean 移除 -->
 
 </beans>
